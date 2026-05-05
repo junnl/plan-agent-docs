@@ -1,0 +1,23 @@
+{
+  "name": "plan-agent-docs",
+  "version": "0.1.0",
+  "description": "Generate AGENTS.md and CLAUDE.md from OMX/OMC planning artifacts.",
+  "license": "MIT",
+  "type": "commonjs",
+  "bin": {
+    "plan-agent-docs": "bin/plan-agent-docs.js"
+  },
+  "files": [
+    "bin/",
+    "templates/",
+    "README.md",
+    "LICENSE"
+  ],
+  "scripts": {
+    "smoke": "node bin/plan-agent-docs.js --help && node bin/plan-agent-docs.js generate --project-root test/fixtures/greenfield --force --dry-run && node bin/plan-agent-docs.js install --target all --scope project --project-root test/fixtures/install-target --dry-run",
+    "test": "node bin/plan-agent-docs.js generate --project-root test/fixtures/sample-plan --dry-run"
+  },
+  "engines": {
+    "node": ">=18"
+  }
+}
