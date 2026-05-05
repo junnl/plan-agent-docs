@@ -1,48 +1,62 @@
 # plan-agent-docs
 
-Generate `AGENTS.md` and `CLAUDE.md` from OMX/OMC planning artifacts, then install programming-CLI entries for Codex, Claude Code, and OpenCode.
+Turn your plan into persistent agent instructions.
 
-## Install
+`plan-agent-docs` reads `.omx/plans`, `.omc/plans`, or any `*plan*.md` file and generates:
 
-From this folder:
+- `AGENTS.md` for Codex, OpenCode, and other coding agents
+- `CLAUDE.md` as thin Claude Code memory that points to `@AGENTS.md`
+- optional CLI entries so Claude Code and OpenCode can run `/plan-agent-docs`
+
+## Quick Start
+
+Install the CLI:
 
 ```bash
-npm install -g .
+npm install -g github:junnl/plan-agent-docs
 ```
 
-Then verify:
+Install coding-CLI entries once:
 
 ```bash
-plan-agent-docs --help
+plan-agent-docs setup
 ```
 
-## Generate Agent Docs
-
-In a project that has `.omx/plans/*.md`, `.omc/plans/*.md`, or another `*plan*.md`:
+Then, inside any project after writing a plan:
 
 ```bash
-plan-agent-docs generate
+plan-agent-docs init
+```
+
+That is the normal workflow.
+
+## Daily Use
+
+Use the latest discovered plan:
+
+```bash
+plan-agent-docs init
+```
+
+Use a specific plan:
+
+```bash
+plan-agent-docs init --plan .omx/plans/prd-example.md
 ```
 
 Preview without writing:
 
 ```bash
-plan-agent-docs generate --dry-run
+plan-agent-docs init --dry-run
 ```
 
-Specify a plan:
+Create greenfield placeholders when no plan exists yet:
 
 ```bash
-plan-agent-docs generate --plan .omx/plans/prd-example.md
+plan-agent-docs init --greenfield
 ```
 
-For an empty greenfield project with no plan file yet:
-
-```bash
-plan-agent-docs generate --force
-```
-
-Existing `AGENTS.md` and `CLAUDE.md` are preserved. The CLI only replaces the generated marker block:
+The generated files are safe to re-run. Existing content is preserved, and only this block is replaced:
 
 ```md
 <!-- PLAN-AGENT-DOCS:START -->
@@ -50,28 +64,81 @@ Existing `AGENTS.md` and `CLAUDE.md` are preserved. The CLI only replaces the ge
 <!-- PLAN-AGENT-DOCS:END -->
 ```
 
-Existing files are backed up before writes unless `--no-backup` is passed.
+Existing files are backed up before writes.
 
-## Install Programming CLI Entries
+## Use Inside Coding CLIs
 
-Install all global entries:
+After `plan-agent-docs setup`, use:
 
-```bash
-plan-agent-docs install --target all --scope global
+```text
+Claude Code: /plan-agent-docs
+OpenCode:    /plan-agent-docs
+Codex:       $plan-agent-docs
 ```
 
-Install only one tool:
+Claude Code and OpenCode also accept arguments:
 
-```bash
-plan-agent-docs install --target codex --scope global
-plan-agent-docs install --target claude --scope global
-plan-agent-docs install --target opencode --scope global
+```text
+/plan-agent-docs --plan .omx/plans/prd-example.md
+/plan-agent-docs --greenfield
+/plan-agent-docs --dry-run
 ```
 
-Install project-local entries:
+Codex CLI does not currently provide an official user-defined slash command surface, so Codex uses the explicit skill trigger `$plan-agent-docs`. The shell command `plan-agent-docs init` works everywhere.
+
+## What It Reads
+
+Plan discovery checks, newest first:
+
+- `.omx/plans/*.md`
+- `.omc/plans/*.md`
+- `.omx/drafts/*.md`
+- `.omc/drafts/*.md`
+- `plans/*.md`
+- `docs/*plan*.md`
+- root `*plan*.md`
+
+If nearby PRD, test spec, plan, or ADR files were created around the same time, they are read together.
+
+## What It Writes
+
+`AGENTS.md` includes:
+
+- source plan paths
+- project intent
+- selected stack or greenfield startup protocol
+- detected manifests and commands
+- acceptance criteria
+- implementation guidance
+- constraints, risks, and ADR notes
+- coding and verification rules
+
+`CLAUDE.md` includes:
+
+- `@AGENTS.md`
+- source plan paths
+- Claude-specific memory notes
+
+## Installation Details
+
+One-step setup:
 
 ```bash
-plan-agent-docs install --target all --scope project
+plan-agent-docs setup
+```
+
+Install only one CLI integration:
+
+```bash
+plan-agent-docs setup --target claude
+plan-agent-docs setup --target opencode
+plan-agent-docs setup --target codex
+```
+
+Project-local install instead of global:
+
+```bash
+plan-agent-docs install --scope project
 ```
 
 Show install paths:
@@ -80,93 +147,39 @@ Show install paths:
 plan-agent-docs paths
 ```
 
-## Tool-Specific Use
-
-Codex:
+Global paths:
 
 ```text
-$plan-agent-docs 根据最新 plan 生成 AGENTS.md 和 CLAUDE.md
+Codex:       ~/.codex/skills/plan-agent-docs
+Claude Code: ~/.claude/skills/plan-agent-docs
+OpenCode:    ~/.config/opencode/skills/plan-agent-docs
+OpenCode:    ~/.config/opencode/commands/plan-agent-docs.md
 ```
 
-Codex CLI currently has official built-in slash commands but no official user-defined slash command surface. Use the explicit skill trigger above or run `plan-agent-docs generate` from the shell.
+On Windows, OpenCode uses `%APPDATA%/opencode`.
 
-Claude Code:
+## Command Reference
 
-```text
-/plan-agent-docs
+```bash
+plan-agent-docs setup [--target all|codex|claude|opencode] [--dry-run]
+plan-agent-docs init [--project-root <dir>] [--plan <file>] [--dry-run] [--greenfield]
+plan-agent-docs install [--target all|codex|claude|opencode] [--scope global|project]
+plan-agent-docs paths
 ```
 
-With arguments:
+Legacy aliases are kept:
 
-```text
-/plan-agent-docs --plan .omx/plans/prd-example.md
-/plan-agent-docs --force
+```bash
+plan-agent-docs generate
+plan-agent-docs install-skills
 ```
 
-OpenCode:
+## Why This Exists
 
-```text
-/plan-agent-docs
-```
+`/init` commands usually summarize an existing codebase. This tool is for plan-first work:
 
-With arguments:
+1. Write the plan.
+2. Convert the plan into durable agent instructions.
+3. Let future Codex, Claude Code, and OpenCode sessions inherit the same stack, constraints, commands, and verification gates.
 
-```text
-/plan-agent-docs --plan .omx/plans/prd-example.md
-/plan-agent-docs --force
-```
-
-## Install Locations
-
-Codex global default:
-
-```text
-$CODEX_HOME/skills/plan-agent-docs
-```
-
-If `CODEX_HOME` is unset:
-
-```text
-~/.codex/skills/plan-agent-docs
-```
-
-Codex project install:
-
-```text
-.agents/skills/plan-agent-docs
-```
-
-Claude Code global install:
-
-```text
-~/.claude/skills/plan-agent-docs
-```
-
-Claude Code project install:
-
-```text
-.claude/skills/plan-agent-docs
-```
-
-OpenCode global install:
-
-```text
-~/.config/opencode/skills/plan-agent-docs
-~/.config/opencode/commands/plan-agent-docs.md
-```
-
-On Windows, these follow `%APPDATA%/opencode/skills/plan-agent-docs` and `%APPDATA%/opencode/commands/plan-agent-docs.md`.
-
-OpenCode project install:
-
-```text
-.opencode/skills/plan-agent-docs
-.opencode/commands/plan-agent-docs.md
-```
-
-## Notes
-
-- `AGENTS.md` is the canonical cross-agent contract.
-- `CLAUDE.md` is generated as a thin Claude Code memory file that references `@AGENTS.md`.
-- OpenCode uses `AGENTS.md` as project rules and supports OpenCode skills from `.opencode/skills` and global config.
-- This package does not install lint, test, or build tools. It records the commands and verification gates that future agent sessions should follow.
+It does not replace lint, typecheck, tests, or CI. It tells agents what to run and how to behave; your toolchain still enforces correctness.

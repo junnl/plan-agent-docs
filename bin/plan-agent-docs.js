@@ -49,7 +49,7 @@ function main() {
       console.log(pkg.version);
       return;
     }
-    if (command === "generate") {
+    if (command === "generate" || command === "init") {
       generate(parseOptions(args, {
         "project-root": ".",
         plan: [],
@@ -57,6 +57,16 @@ function main() {
         force: false,
         "no-backup": false
       }, ["plan"]));
+      return;
+    }
+    if (command === "setup") {
+      installSkills(parseOptions(args, {
+        target: "all",
+        scope: "global",
+        "project-root": ".",
+        "dry-run": false,
+        force: true
+      }));
       return;
     }
     if (command === "install-skills" || command === "install") {
@@ -84,20 +94,22 @@ function printHelp() {
   console.log(`plan-agent-docs
 
 Usage:
-  plan-agent-docs generate [--project-root <dir>] [--plan <file>] [--dry-run] [--force]
+  plan-agent-docs setup [--target all|codex|claude|opencode]
+  plan-agent-docs init [--project-root <dir>] [--plan <file>] [--dry-run] [--greenfield]
   plan-agent-docs install [--target all|codex|claude|opencode] [--scope global|project]
   plan-agent-docs paths
 
 Commands:
-  generate        Generate or update AGENTS.md and CLAUDE.md from plan artifacts.
-  install        Install programming-CLI entries for Codex, Claude Code, and/or OpenCode.
-  paths           Show default skill install paths.
+  setup    One-step global setup for programming-CLI entries. Replaces older plan-agent-docs entries.
+  init     Generate or update AGENTS.md and CLAUDE.md in the current project.
+  install  Advanced installer for global or project-local programming-CLI entries.
+  paths    Show default install paths.
 
 Examples:
-  plan-agent-docs generate
-  plan-agent-docs generate --plan .omx/plans/prd-example.md
-  plan-agent-docs generate --force --dry-run
-  plan-agent-docs install --target all --scope global
+  plan-agent-docs setup
+  plan-agent-docs init
+  plan-agent-docs init --plan .omx/plans/prd-example.md
+  plan-agent-docs init --greenfield --dry-run
   plan-agent-docs install --target opencode --scope project
 
 Programming CLI entries:
@@ -151,6 +163,7 @@ function parseOptions(args, defaults, multiKeys = []) {
 function normalizeKey(key) {
   if (key === "agent") return "target";
   if (key === "root") return "project-root";
+  if (key === "greenfield") return "force";
   return key;
 }
 

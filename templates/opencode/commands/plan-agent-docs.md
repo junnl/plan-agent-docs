@@ -6,6 +6,6 @@ Run the plan-agent-docs generator in the current project root.
 
 Command output:
 
-!`plan-agent-docs generate $ARGUMENTS`
+!`plan-agent-docs init $ARGUMENTS`
 
-Report whether `AGENTS.md` and `CLAUDE.md` were updated. If no plan exists, suggest rerunning with `/plan-agent-docs --force` or `/plan-agent-docs --plan <file>`.
+Report whether `AGENTS.md` and `CLAUDE.md` were updated. If no plan exists, suggest rerunning with `/plan-agent-docs --greenfield` or `/plan-agent-docs --plan <file>`.
