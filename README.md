@@ -1,8 +1,8 @@
 # plan-agent-docs
 
-`plan-agent-docs` converts a project plan into persistent coding-agent instructions.
+`plan-agent-docs` converts a project plan into persistent coding-agent instructions, with Karpathy-style coding guardrails built in.
 
-It is for teams and solo developers who start projects with a PRD, design plan, OMX/OMC plan, test spec, or ADR, then switch between Codex, Claude Code, and OpenCode while implementing. Instead of re-explaining the stack, constraints, commands, and verification rules in every new chat, this tool writes them into `AGENTS.md` and `CLAUDE.md`.
+It is for teams and solo developers who start projects with a PRD, design plan, OMX/OMC plan, test spec, or ADR, then switch between Codex, Claude Code, and OpenCode while implementing. Instead of re-explaining the stack, constraints, commands, verification rules, and "don't overcomplicate this" behavior in every new chat, this single tool writes them into `AGENTS.md` and `CLAUDE.md`.
 
 The basic idea:
 
@@ -33,6 +33,8 @@ That creates recurring problems:
 
 `plan-agent-docs` closes that gap by turning the plan itself into reusable agent instructions.
 
+It also incorporates the core ideas from [forrestchang/andrej-karpathy-skills](https://github.com/forrestchang/andrej-karpathy-skills): think before coding, keep solutions simple, make surgical changes, and define verifiable goals. These rules are embedded into the generated files; `plan-agent-docs setup` does not install a separate `karpathy-guidelines` skill or a second `/andrej-karpathy-skills:*` command.
+
 ## What It Generates
 
 `AGENTS.md` is the canonical cross-agent contract. It includes:
@@ -45,6 +47,7 @@ That creates recurring problems:
 - implementation guidance
 - constraints, risks, and ADR notes
 - coding and verification rules
+- built-in Karpathy coding guardrails: explicit assumptions, simplicity first, surgical changes, and goal-driven verification
 
 `CLAUDE.md` is generated as a thin Claude Code memory file. It points to `@AGENTS.md` and adds Claude-specific reminders.
 
@@ -66,11 +69,13 @@ Install the CLI:
 npm install -g github:junnl/plan-agent-docs
 ```
 
-Install coding-CLI entries once:
+Install the `plan-agent-docs` coding-CLI entries once:
 
 ```bash
 plan-agent-docs setup
 ```
+
+This installs only `plan-agent-docs` integrations for Codex, Claude Code, and OpenCode. The Karpathy-style behavior is already inside the generated docs.
 
 Then, inside any project after writing a plan:
 
@@ -115,6 +120,24 @@ Claude Code and OpenCode accept arguments:
 ```
 
 Codex CLI currently has built-in slash commands but no official user-defined slash command surface. Use `$plan-agent-docs` in Codex, or run `plan-agent-docs init` in the shell.
+
+## Relationship To andrej-karpathy-skills
+
+This project absorbs the useful behavior from `forrestchang/andrej-karpathy-skills` into one generator:
+
+- `Think Before Coding` becomes generated rules for assumptions, ambiguity, tradeoffs, and pushback.
+- `Simplicity First` becomes generated rules against speculative features, premature abstractions, and bloated implementations.
+- `Surgical Changes` becomes generated rules for minimal diffs, matching local style, and avoiding drive-by refactors.
+- `Goal-Driven Execution` becomes generated rules for success criteria, regression tests, and verification loops.
+
+You do not need to install `andrej-karpathy-skills` alongside this project. If you run `plan-agent-docs setup`, the only installed skill/command name is `plan-agent-docs`.
+
+How the source project maps into this project:
+
+- `CLAUDE.md` and `skills/karpathy-guidelines/SKILL.md` are represented by the generated `Built-In Karpathy Coding Guardrails` section.
+- `commands/plan-agent-docs.md` and `skills/plan-agent-docs/SKILL.md` are represented by this package's `plan-agent-docs init` command plus the Codex, Claude Code, and OpenCode templates.
+- Cursor guidance is handled indirectly through committed `AGENTS.md`/`CLAUDE.md`; this package does not add a separate Cursor rule installer because the goal is one cross-agent project contract.
+- Examples from the source project are condensed into enforceable generated rules instead of shipping another documentation-only skill.
 
 ## Examples
 
@@ -188,6 +211,7 @@ Use this when:
 - you use OMX/OMC planning outputs
 - you create greenfield repos where no code conventions exist yet
 - you want future agent sessions to inherit stack decisions and verification gates
+- you want built-in Karpathy-style guardrails against wrong assumptions, overengineering, and drive-by edits
 
 Do not use it as a replacement for:
 
@@ -224,10 +248,11 @@ plan-agent-docs paths
 Global paths:
 
 ```text
-Codex:       ~/.codex/skills/plan-agent-docs
-Claude Code: ~/.claude/skills/plan-agent-docs
-OpenCode:    ~/.config/opencode/skills/plan-agent-docs
-OpenCode:    ~/.config/opencode/commands/plan-agent-docs.md
+Codex skill:        ~/.codex/skills/plan-agent-docs
+Claude Code skill:  ~/.claude/skills/plan-agent-docs
+Claude Code command: ~/.claude/commands/plan-agent-docs.md
+OpenCode skill:     ~/.config/opencode/skills/plan-agent-docs
+OpenCode command:   ~/.config/opencode/commands/plan-agent-docs.md
 ```
 
 On Windows, OpenCode uses `%APPDATA%/opencode`.

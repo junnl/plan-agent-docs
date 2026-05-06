@@ -15,7 +15,7 @@
   ],
   "scripts": {
     "smoke": "node bin/plan-agent-docs.js --help && node bin/plan-agent-docs.js init --project-root test/fixtures/greenfield --greenfield --dry-run && node bin/plan-agent-docs.js setup --target all --project-root test/fixtures/install-target --dry-run",
-    "test": "node bin/plan-agent-docs.js init --project-root test/fixtures/sample-plan --dry-run"
+    "test": "node bin/plan-agent-docs.js init --project-root test/fixtures/sample-plan --dry-run && node test/single-entry.test.js"
   },
   "engines": {
     "node": ">=18"

@@ -10,6 +10,43 @@ const END = "<!-- PLAN-AGENT-DOCS:END -->";
 const SKILL_NAME = "plan-agent-docs";
 const ROOT = path.resolve(__dirname, "..");
 
+const KARPATHY_GUIDELINES = `### Built-In Karpathy Coding Guardrails
+These rules are embedded by \`plan-agent-docs\`; do not install a second \`karpathy-guidelines\` skill or a separate \`andrej-karpathy-skills\` command for this project.
+
+Tradeoff: bias toward caution, simple designs, and smaller diffs on non-trivial work. Use judgment for obvious one-line fixes.
+
+#### Think Before Coding
+- State assumptions explicitly before implementation when they affect architecture, data shape, APIs, security, or user-visible behavior.
+- Surface ambiguity and competing interpretations instead of silently choosing one.
+- Present tradeoffs when there is more than one plausible path.
+- Ask only when uncertainty would materially change the implementation or risk destructive work.
+
+#### Simplicity First
+- Write the minimum code that solves the current problem.
+- Do not add features, flexibility, configurability, error handling, or abstractions that were not requested or justified by the plan.
+- Avoid single-use abstractions; duplicate once if that is clearer, then abstract only when repetition becomes real.
+- If the solution feels larger than the problem, simplify before continuing.
+
+#### Surgical Changes
+- Touch only files and lines required by the task.
+- Match existing style even when you would choose a different style in new code.
+- Do not perform drive-by refactors, comment rewrites, formatting sweeps, or adjacent "improvements".
+- Clean up unused imports, variables, functions, and files introduced by your own change.
+- Mention unrelated dead code or design issues in the final report instead of deleting them unless asked.
+
+#### Goal-Driven Execution
+- Convert requests into verifiable success criteria before implementation.
+- For bug fixes, reproduce the bug with a test or documented failing check before changing behavior when feasible.
+- For refactors, verify behavior before and after the edit.
+- For multi-step work, keep each step independently verifiable.
+- Loop until the relevant checks pass or report the exact blocker.
+
+#### Working Signals
+- Diffs contain fewer unrelated changes.
+- Solutions are smaller than the first obvious over-engineered design.
+- Clarifying questions happen before costly implementation mistakes.
+- Completion reports cite concrete verification, not "should work".`;
+
 const STACK_KEYWORDS = {
   "Next.js": [/\bnext\.?js\b/i, /\bnext\b/i],
   React: [/\breact\b/i],
@@ -100,10 +137,13 @@ Usage:
   plan-agent-docs paths
 
 Commands:
-  setup    One-step global setup for programming-CLI entries. Replaces older plan-agent-docs entries.
+  setup    One-step global setup for programming-CLI entries. Replaces older plan-agent-docs entries only.
   init     Generate or update AGENTS.md and CLAUDE.md in the current project.
   install  Advanced installer for global or project-local programming-CLI entries.
   paths    Show default install paths.
+
+Built in:
+  Generated docs include Karpathy-style guardrails. No second karpathy-guidelines skill is installed.
 
 Examples:
   plan-agent-docs setup
@@ -411,6 +451,8 @@ ${textExcerpt(summary.steps, "TODO(plan-agent-docs): Add implementation sequenci
 ${textExcerpt(summary.risks || summary.adr, "TODO(plan-agent-docs): Add constraints, risks, rejected alternatives, and architecture decisions from the plan.")}
 
 ## Coding Rules
+${KARPATHY_GUIDELINES}
+
 - Reuse existing project patterns before adding new abstractions.
 - Keep diffs small, reviewable, and reversible.
 - Do not add dependencies unless the plan or user explicitly justifies them.
@@ -453,6 +495,8 @@ ${bulletBlock(sourceLines, "TODO(plan-agent-docs): No source plan recorded.")}
 - Use this file for Claude Code memory only; keep durable cross-agent rules in \`AGENTS.md\`.
 - Before implementing after a new plan, verify \`AGENTS.md\` reflects that plan.
 - If plan details conflict with code, inspect the code and update the plan-derived block instead of guessing.
+
+${KARPATHY_GUIDELINES}
 ${END}
 `;
 }
@@ -534,7 +578,7 @@ function commandInstallDir(target, scope, projectRoot) {
 
 function installIntegration(target, scope, projectRoot, options) {
   installSkill(target, skillInstallDir(target, scope, projectRoot), options);
-  if (target === "opencode") {
+  if (target === "claude" || target === "opencode") {
     installCommandFile(target, commandInstallDir(target, scope, projectRoot), options);
   }
 }

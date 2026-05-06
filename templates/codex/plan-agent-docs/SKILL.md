@@ -1,6 +1,6 @@
 ---
 name: plan-agent-docs
-description: Generate or update AGENTS.md and CLAUDE.md from OMX/OMC plan artifacts. Use after creating a plan, PRD, test spec, ralplan output, or greenfield project plan when future Codex, Claude Code, and OpenCode sessions should follow the selected stack, commands, constraints, and verification rules.
+description: Generate or update AGENTS.md and CLAUDE.md from OMX/OMC plan artifacts with built-in Karpathy coding guardrails. Use after creating a plan, PRD, test spec, ralplan output, or greenfield project plan when future Codex, Claude Code, and OpenCode sessions should follow the selected stack, commands, constraints, verification rules, and simple/surgical coding behavior without installing a second skill.
 ---
 
 # Plan Agent Docs
@@ -14,6 +14,7 @@ Generate project agent instruction files from the latest plan.
 3. Generate or update root `AGENTS.md` as the canonical cross-agent contract.
 4. Generate or update root `CLAUDE.md` as thin Claude Code memory that references `@AGENTS.md`.
 5. Preserve manual content; update only the generated marker block.
+6. Ensure the generated block includes the built-in Karpathy coding guardrails: think before coding, simplicity first, surgical changes, and goal-driven verification.
 
 ## Command
 
