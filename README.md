@@ -1,12 +1,62 @@
 # plan-agent-docs
 
-Turn your plan into persistent agent instructions.
+`plan-agent-docs` converts a project plan into persistent coding-agent instructions.
 
-`plan-agent-docs` reads `.omx/plans`, `.omc/plans`, or any `*plan*.md` file and generates:
+It is for teams and solo developers who start projects with a PRD, design plan, OMX/OMC plan, test spec, or ADR, then switch between Codex, Claude Code, and OpenCode while implementing. Instead of re-explaining the stack, constraints, commands, and verification rules in every new chat, this tool writes them into `AGENTS.md` and `CLAUDE.md`.
 
-- `AGENTS.md` for Codex, OpenCode, and other coding agents
-- `CLAUDE.md` as thin Claude Code memory that points to `@AGENTS.md`
-- optional CLI entries so Claude Code and OpenCode can run `/plan-agent-docs`
+The basic idea:
+
+```text
+plan / PRD / ADR / test spec
+        |
+        v
+plan-agent-docs
+        |
+        v
+AGENTS.md + CLAUDE.md
+        |
+        v
+Codex / Claude Code / OpenCode follow the same project contract
+```
+
+## What Problem It Solves
+
+Coding agents are good at reading existing code, but greenfield and plan-first projects have a gap: the most important decisions often live in a planning document, not in code yet.
+
+That creates recurring problems:
+
+- A new agent session does not know the selected stack.
+- Claude Code and Codex receive different instructions.
+- A plan says "use Playwright smoke tests", but the next session forgets.
+- A greenfield repo has no code to infer conventions from.
+- `/init` summarizes the codebase, but your project has not been scaffolded yet.
+
+`plan-agent-docs` closes that gap by turning the plan itself into reusable agent instructions.
+
+## What It Generates
+
+`AGENTS.md` is the canonical cross-agent contract. It includes:
+
+- source plan paths
+- project intent
+- selected stack or greenfield startup protocol
+- detected manifests and commands
+- acceptance criteria
+- implementation guidance
+- constraints, risks, and ADR notes
+- coding and verification rules
+
+`CLAUDE.md` is generated as a thin Claude Code memory file. It points to `@AGENTS.md` and adds Claude-specific reminders.
+
+Existing files are preserved. Only this generated block is replaced:
+
+```md
+<!-- PLAN-AGENT-DOCS:START -->
+...
+<!-- PLAN-AGENT-DOCS:END -->
+```
+
+Backups are created before writes.
 
 ## Quick Start
 
@@ -28,9 +78,45 @@ Then, inside any project after writing a plan:
 plan-agent-docs init
 ```
 
-That is the normal workflow.
+This is the normal workflow.
 
-## Daily Use
+## Typical Workflow
+
+1. Write or generate a plan in `.omx/plans`, `.omc/plans`, `plans`, `docs`, or the project root.
+2. Run `plan-agent-docs init`.
+3. Commit the generated `AGENTS.md` and `CLAUDE.md`.
+4. Start Codex, Claude Code, or OpenCode.
+5. The agent now has project instructions derived from the plan.
+
+For an empty project with no plan file yet:
+
+```bash
+plan-agent-docs init --greenfield
+```
+
+That creates a startup protocol telling agents not to write application code before choosing a stack, recording commands, and scaffolding verification.
+
+## Use Inside Coding CLIs
+
+After `plan-agent-docs setup`, use:
+
+```text
+Claude Code: /plan-agent-docs
+OpenCode:    /plan-agent-docs
+Codex:       $plan-agent-docs
+```
+
+Claude Code and OpenCode accept arguments:
+
+```text
+/plan-agent-docs --plan .omx/plans/prd-example.md
+/plan-agent-docs --greenfield
+/plan-agent-docs --dry-run
+```
+
+Codex CLI currently has built-in slash commands but no official user-defined slash command surface. Use `$plan-agent-docs` in Codex, or run `plan-agent-docs init` in the shell.
+
+## Examples
 
 Use the latest discovered plan:
 
@@ -50,41 +136,23 @@ Preview without writing:
 plan-agent-docs init --dry-run
 ```
 
-Create greenfield placeholders when no plan exists yet:
+Create greenfield placeholders:
 
 ```bash
 plan-agent-docs init --greenfield
 ```
 
-The generated files are safe to re-run. Existing content is preserved, and only this block is replaced:
+Install only Claude Code integration:
 
-```md
-<!-- PLAN-AGENT-DOCS:START -->
-...
-<!-- PLAN-AGENT-DOCS:END -->
+```bash
+plan-agent-docs setup --target claude
 ```
 
-Existing files are backed up before writes.
+Install project-local entries instead of global entries:
 
-## Use Inside Coding CLIs
-
-After `plan-agent-docs setup`, use:
-
-```text
-Claude Code: /plan-agent-docs
-OpenCode:    /plan-agent-docs
-Codex:       $plan-agent-docs
+```bash
+plan-agent-docs install --scope project
 ```
-
-Claude Code and OpenCode also accept arguments:
-
-```text
-/plan-agent-docs --plan .omx/plans/prd-example.md
-/plan-agent-docs --greenfield
-/plan-agent-docs --dry-run
-```
-
-Codex CLI does not currently provide an official user-defined slash command surface, so Codex uses the explicit skill trigger `$plan-agent-docs`. The shell command `plan-agent-docs init` works everywhere.
 
 ## What It Reads
 
@@ -100,28 +168,40 @@ Plan discovery checks, newest first:
 
 If nearby PRD, test spec, plan, or ADR files were created around the same time, they are read together.
 
-## What It Writes
+The tool also checks lightweight project signals such as:
 
-`AGENTS.md` includes:
+- `package.json`
+- `pyproject.toml`
+- `Cargo.toml`
+- `go.mod`
+- Docker files
+- common build/test scripts
 
-- source plan paths
-- project intent
-- selected stack or greenfield startup protocol
-- detected manifests and commands
-- acceptance criteria
-- implementation guidance
-- constraints, risks, and ADR notes
-- coding and verification rules
+It does not deeply analyze source code. It is designed to preserve plan intent, not replace code review.
 
-`CLAUDE.md` includes:
+## Good Fit
 
-- `@AGENTS.md`
-- source plan paths
-- Claude-specific memory notes
+Use this when:
+
+- you use Codex, Claude Code, and/or OpenCode across the same repo
+- you write plans before implementation
+- you use OMX/OMC planning outputs
+- you create greenfield repos where no code conventions exist yet
+- you want future agent sessions to inherit stack decisions and verification gates
+
+Do not use it as a replacement for:
+
+- lint
+- typecheck
+- tests
+- CI
+- human architecture review
+
+`plan-agent-docs` tells agents what to do. Your toolchain still enforces whether the code is correct.
 
 ## Installation Details
 
-One-step setup:
+One-step global setup:
 
 ```bash
 plan-agent-docs setup
@@ -133,12 +213,6 @@ Install only one CLI integration:
 plan-agent-docs setup --target claude
 plan-agent-docs setup --target opencode
 plan-agent-docs setup --target codex
-```
-
-Project-local install instead of global:
-
-```bash
-plan-agent-docs install --scope project
 ```
 
 Show install paths:
@@ -173,13 +247,3 @@ Legacy aliases are kept:
 plan-agent-docs generate
 plan-agent-docs install-skills
 ```
-
-## Why This Exists
-
-`/init` commands usually summarize an existing codebase. This tool is for plan-first work:
-
-1. Write the plan.
-2. Convert the plan into durable agent instructions.
-3. Let future Codex, Claude Code, and OpenCode sessions inherit the same stack, constraints, commands, and verification gates.
-
-It does not replace lint, typecheck, tests, or CI. It tells agents what to run and how to behave; your toolchain still enforces correctness.
